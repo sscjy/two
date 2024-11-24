@@ -1,0 +1,49 @@
+// ... 前面的樣式保持不變 ...
+
+<style>
+    #moon {
+        position: fixed;
+        width: 200px;  /* 設定圖片寬度 */
+        height: 200px; /* 設定圖片高度 */
+        pointer-events: none;
+        transform: translate(-50%, -50%);
+        filter: drop-shadow(0 0 20px rgba(255, 255, 255, 0.3));
+        transition: z-index 0s;
+        object-fit: contain; /* 確保圖片比例正確 */
+    }
+</style>
+
+<body>
+    <div id="earth">🌍</div>
+    <img id="moon" src="./image/station1.png" alt="Space Station">
+
+    <script>
+        const moon = document.getElementById('moon');
+        const earth = document.getElementById('earth');
+        const earthPhases = ['🌍', '🌎', '🌏'];
+        let currentEarthPhase = 0;
+        let lastMouseX = window.innerWidth / 2;
+
+        // 地球動畫保持不變
+        setInterval(() => {
+            currentEarthPhase = (currentEarthPhase + 1) % earthPhases.length;
+            earth.textContent = earthPhases[currentEarthPhase];
+        }, 1000);
+
+        // 跟隨滑鼠並調整圖層
+        document.addEventListener('mousemove', (e) => {
+            const centerX = window.innerWidth / 2;
+            moon.style.left = `${e.clientX}px`;
+            moon.style.top = `${e.clientY}px`;
+
+            if (e.clientX > lastMouseX) {
+                moon.style.zIndex = "400";
+            } else if (e.clientX < lastMouseX) {
+                moon.style.zIndex = "600";
+            }
+            lastMouseX = e.clientX;
+        });
+
+        // ... 其餘星星相關代碼保持不變 ...
+    </script>
+</body>

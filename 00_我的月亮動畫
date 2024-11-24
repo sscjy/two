@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <title>地球月亮動畫</title>
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+            background-color: #0a0a2a;
+            cursor: none;
+            min-height: 100vh;
+        }
+        
+        .star {
+            position: absolute;
+            background-color: white;
+            border-radius: 50%;
+            pointer-events: none;
+            transition: opacity 1s ease;
+            box-shadow: 0 0 3px #fff;
+        }
+        
+        #earth {
+            position: fixed;
+            left: 50%;
+            top: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 300px;
+            line-height: 1;
+            pointer-events: none;
+            text-shadow: 0 0 20px rgba(255, 255, 255, 0.3);
+            z-index: 500;
+        }
+        
+        #moon {
+            position: fixed;
+            font-size: 200px;
+            line-height: 1;
+            pointer-events: none;
+            transform: translate(-50%, -50%);
+            text-shadow: 0 0 20px rgba(255, 255, 255, 0.3);
+            transition: z-index 0s;
+        }
+    </style>
+</head>
+<body>
+    <div id="earth">🌍</div>
+    <div id="moon">🌑</div>
+
+    <script>
+        const moon = document.getElementById('moon');
+        const earth = document.getElementById('earth');
+        const moonPhases = ['🌑', '🌒', '🌓', '🌔', '🌕', '🌖', '🌗', '🌘'];
+        const earthPhases = ['🌍', '🌎', '🌏'];
+        let currentMoonPhase = 0;
+        let currentEarthPhase = 0;
+        let lastMouseX = window.innerWidth / 2;
+
+        // 地球動畫
+        setInterval(() => {
+            currentEarthPhase = (currentEarthPhase + 1) % earthPhases.length;
+            earth.textContent = earthPhases[currentEarthPhase];
+        }, 1000); // 每秒切換一次地球
+
+        // 月相變化
+        setInterval(() => {
+            currentMoonPhase = (currentMoonPhase + 1) % moonPhases.length;
+            moon.textContent = moonPhases[currentMoonPhase];
+        }, 200);
+
+        // 跟隨滑鼠並調整圖層
+        document.addEventListener('mousemove', (e) => {
+            const centerX = window.innerWidth / 2;
+            moon.style.left = `${e.clientX}px`;
+            moon.style.top = `${e.clientY}px`;
+
+            // 判斷滑鼠移動方向並調整圖層
+            if (e.clientX > lastMouseX) { // 向右移動
+                moon.style.zIndex = "400"; // 月亮在地球下面
+            } else if (e.clientX < lastMouseX) { // 向左移動
+                moon.style.zIndex = "600"; // 月亮在地球上面
+            }
+            lastMouseX = e.clientX;
+        });
+
+        // 創建星星
+        function createStars() {
+            const starCount = Math.floor((window.innerWidth * window.innerHeight) / 2000);
+            for (let i = 0; i < starCount; i++) {
+                const star = document.createElement('div');
+                star.className = 'star';
+                
+                const x = Math.random() * window.innerWidth;
+                const y = Math.random() * window.innerHeight;
+                const size = Math.random() * 2 + 2;
+                
+                star.style.left = `${x}px`;
+                star.style.top = `${y}px`;
+                star.style.width = `${size}px`;
+                star.style.height = `${size}px`;
+                
+                document.body.appendChild(star);
+                animateStar(star);
+            }
+        }
+        
+        function animateStar(star) {
+            setInterval(() => {
+                const opacity = Math.random() * 0.9 + 0.1;
+                star.style.opacity = opacity;
+            }, Math.random() * 4000 + 1000);
+        }
+
+        window.addEventListener('resize', () => {
+            document.querySelectorAll('.star').forEach(star => star.remove());
+            createStars();
+        });
+
+        createStars();
+    </script>
+</body>
+</html>

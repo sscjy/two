@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>物理物體生成器</title>
+    <style>
+        body { margin: 0; overflow: hidden; }
+        #info {
+            position: fixed;
+            top: 10px;
+            left: 10px;
+            background: rgba(0,0,0,0.7);
+            color: white;
+            padding: 10px;
+            font-family: Arial;
+            border-radius: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div id="info">物體數量: 0 | FPS: 0</div>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/matter-js/0.19.0/matter.min.js"></script>
+    <script>
+        const Engine = Matter.Engine,
+              Render = Matter.Render,
+              Runner = Matter.Runner,
+              Bodies = Matter.Bodies,
+              Composite = Matter.Composite,
+              Common = Matter.Common,
+              Mouse = Matter.Mouse,
+              MouseConstraint = Matter.MouseConstraint,
+              Query = Matter.Query;
+
+        // 初始化引擎和渲染器
+        const engine = Engine.create();
+        const render = Render.create({
+            element: document.body,
+            engine: engine,
+            options: {
+                width: window.innerWidth,
+                height: window.innerHeight,
+                wireframes: false
+            }
+        });
+
+        // 創建邊界
+        const walls = [
+            Bodies.rectangle(window.innerWidth/2, 0, window.innerWidth, 60, { isStatic: true }),
+            Bodies.rectangle(window.innerWidth/2, window.innerHeight, window.innerWidth, 60, { isStatic: true }),
+            Bodies.rectangle(0, window.innerHeight/2, 60, window.innerHeight, { isStatic: true }),
+            Bodies.rectangle(window.innerWidth, window.innerHeight/2, 60, window.innerHeight, { isStatic: true })
+        ];
+        Composite.add(engine.world, walls);
+
+        // 加入滑鼠控制
+        const mouse = Mouse.create(render.canvas);
+        const mouseConstraint = MouseConstraint.create(engine, {
+            mouse: mouse,
+            constraint: {
+                stiffness: 0.2,
+                render: {
+                    visible: false
+                }
+            }
+        });
+        Composite.add(engine.world, mouseConstraint);
+        render.mouse = mouse;
+
+        // 啟動渲染器和引擎
+        Render.run(render);
+        const runner = Runner.create();
+        Runner.run(runner, engine);
+
+        // 變數初始化
+        let isCreating = false;
+        let lastTime = performance.now();
+        let frames = 0;
+        let fps = 0;
+        const createInterval = 100; // 每100ms創建一個物體
+        let lastCreateTime = 0;
+
+        // 創建隨機形狀
+        function createRandomBody(x, y) {
+            const size = Common.random(20, 50);
+            const shapes = [
+                () => Bodies.rectangle(x, y, size, size, {
+                    render: { fillStyle: `hsl(${Math.random()*360}, 100%, 50%)` }
+                }),
+                () => Bodies.circle(x, y, size/2, {
+                    render: { fillStyle: `hsl(${Math.random()*360}, 100%, 50%)` }
+                }),
+                () => Bodies.polygon(x, y, Common.random(3, 8), size/2, {
+                    render: { fillStyle: `hsl(${Math.random()*360}, 100%, 50%)` }
+                }),
+                () => {
+                    const vertices = [
+                        { x: -size/2, y: size/2 },
+                        { x: size/2, y: size/2 },
+                        { x: size/4, y: -size/2 },
+                        { x: -size/4, y: -size/2 }
+                    ];
+                    return Bodies.fromVertices(x, y, [vertices], {
+                        render: { fillStyle: `hsl(${Math.random()*360}, 100%, 50%)` }
+                    });
+                }
+            ];
+            return shapes[Math.floor(Math.random() * shapes.length)]();
+        }
+
+        // 修改滑鼠事件處理
+        document.addEventListener('mousedown', (e) => {
+            const bodies = Query.point(Composite.allBodies(engine.world), {
+                x: e.clientX,
+                y: e.clientY
+            });
+            
+            if (bodies.length === 0 || bodies.every(body => body.isStatic)) {
+                // 點擊空白處或靜態邊界時，啟動生成模式
+                isCreating = true;
+            }
+        });
+
+        document.addEventListener('mouseup', () => {
+            isCreating = false;
+        });
+
+        // 更新資訊顯示
+        function updateInfo() {
+            frames++;
+            const now = performance.now();
+            if (now - lastTime >= 1000) {
+                fps = frames;
+                frames = 0;
+                lastTime = now;
+            }
+            document.getElementById('info').textContent = 
+                `物體數量: ${Composite.allBodies(engine.world).length-4} | FPS: ${fps}`;
+            requestAnimationFrame(updateInfo);
+        }
+
+        // 物體生成循環
+        document.addEventListener('mousemove', (e) => {
+            if (isCreating && performance.now() - lastCreateTime > createInterval) {
+                const body = createRandomBody(e.clientX, e.clientY);
+                Composite.add(engine.world, body);
+                lastCreateTime = performance.now();
+            }
+        });
+
+        updateInfo();
+    </script>
+</body>
+</html>

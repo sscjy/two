@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <title>WebAI 示範專案索引</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+
+        h1 {
+            color: #333;
+            text-align: center;
+            padding: 20px 0;
+            border-bottom: 2px solid #333;
+        }
+
+        .project-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 20px;
+            padding: 20px 0;
+        }
+
+        .project-card {
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            transition: transform 0.3s ease;
+        }
+
+        .project-card:hover {
+            transform: translateY(-5px);
+        }
+
+        .project-card h2 {
+            color: #2196F3;
+            margin-top: 0;
+            font-size: 1.5em;
+        }
+
+        .project-card p {
+            color: #666;
+            margin: 10px 0;
+        }
+
+        .project-card a {
+            display: inline-block;
+            text-decoration: none;
+            color: white;
+            background-color: #2196F3;
+            padding: 8px 16px;
+            border-radius: 5px;
+            margin-top: 10px;
+            transition: background-color 0.3s ease;
+        }
+
+        .project-card a:hover {
+            background-color: #1976D2;
+        }
+
+        .tag {
+            display: inline-block;
+            background: #e0e0e0;
+            padding: 3px 8px;
+            border-radius: 3px;
+            font-size: 0.8em;
+            margin-right: 5px;
+            color: #666;
+        }
+    </style>
+</head>
+<body>
+    <h1>WebAI 示範專案索引</h1>
+    
+    <div class="project-grid">
+        <div class="project-card">
+            <h2>手部玩球示範</h2>
+            <p>使用 MediaPipe 手部追蹤與 Matter.js 物理引擎，實現互動式手部玩球效果。</p>
+            <span class="tag">MediaPipe</span>
+            <span class="tag">Matter.js</span>
+            <span class="tag">手部追蹤</span>
+            <a href="00_手部玩球.html">查看示範</a>
+        </div>
+
+        <div class="project-card">
+            <h2>臉部特效</h2>
+            <p>使用 MediaPipe 實現有趣的臉部特效，包含煎蛋眼睛和星星特效。</p>
+            <span class="tag">MediaPipe</span>
+            <span class="tag">臉部追蹤</span>
+            <span class="tag">特效</span>
+            <a href="00_臉部特效1.html">查看示範</a>
+        </div>
+
+        <div class="project-card">
+            <h2>臉部特效標記</h2>
+            <p>展示 MediaPipe 臉部追蹤的基礎功能，包含臉部網格和特徵點標記。</p>
+            <span class="tag">MediaPipe</span>
+            <span class="tag">臉部追蹤</span>
+            <span class="tag">特徵點</span>
+            <a href="00_臉部特效標記.html">查看示範</a>
+        </div>
+
+        <div class="project-card">
+            <h2>Emoji 約束示範</h2>
+            <p>使用 Matter.js 物理引擎展示各種約束效果，以 Emoji 為素材。</p>
+            <span class="tag">Matter.js</span>
+            <span class="tag">物理引擎</span>
+            <span class="tag">Emoji</span>
+            <a href="0我的約束.html">查看示範</a>
+        </div>
+
+        <div class="project-card">
+            <h2>Emoji 列表</h2>
+            <p>展示完整的 Emoji 列表，支援點擊複製功能。</p>
+            <span class="tag">Emoji</span>
+            <span class="tag">互動</span>
+            <a href="00_emoji.html">查看示範</a>
+        </div>
+
+        <div class="project-card">
+            <h2>月亮動畫</h2>
+            <p>展示互動式地球和月亮動畫，包含月相變化效果。</p>
+            <span class="tag">動畫</span>
+            <span class="tag">互動</span>
+            <span class="tag">特效</span>
+            <a href="00_我的月亮動畫">查看示範</a>
+        </div>
+    </div>
+</body>
+</html> 

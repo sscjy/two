@@ -1,0 +1,55 @@
+// ... existing code ...
+
+        // 添加滑鼠控制相關的 Matter.js 模組
+        const Mouse = Matter.Mouse,
+              MouseConstraint = Matter.MouseConstraint;
+
+        // 設置滑鼠控制
+        const mouse = Mouse.create(render.canvas);
+        const mouseConstraint = MouseConstraint.create(engine, {
+            mouse: mouse,
+            constraint: {
+                stiffness: 0.2,
+                render: {
+                    visible: true,
+                    strokeStyle: 'rgba(255,255,255,0.5)',
+                    lineWidth: 2
+                }
+            }
+        });
+
+        World.add(world, mouseConstraint);
+        render.mouse = mouse;
+
+        // 修改滑鼠事件處理
+        let isCreatingMode = false;
+        let spawnInterval;
+
+        document.addEventListener('mousedown', (e) => {
+            // 檢查是否點中物體
+            const bodies = Matter.Query.point(world.bodies, { x: e.clientX, y: e.clientY });
+            if (bodies.length === 0) {
+                // 沒有點中物體，進入創建模式
+                isCreatingMode = true;
+                spawnInterval = setInterval(() => {
+                    const body = createRandomBody(e.clientX, e.clientY);
+                    World.add(world, body);
+                }, 100);
+            }
+        });
+
+        document.addEventListener('mouseup', () => {
+            if (isCreatingMode) {
+                clearInterval(spawnInterval);
+                isCreatingMode = false;
+            }
+        });
+
+        document.addEventListener('mousemove', (e) => {
+            if (isCreatingMode) {
+                const body = createRandomBody(e.clientX, e.clientY);
+                World.add(world, body);
+            }
+        });
+
+// ... existing code ...

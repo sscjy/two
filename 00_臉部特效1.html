@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>簡易版 MediaPipe 人臉特效</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 20px;
+            font-family: Arial, sans-serif;
+        }
+        #container {
+            position: relative;
+            width: 1280px;
+            height: 720px;
+        }
+        #webcam {
+            position: absolute;
+            width: 1280px;
+            height: 720px;
+            transform: rotateY(180deg);
+        }
+        #output_canvas {
+            position: absolute;
+            width: 1280px;
+            height: 720px;
+            transform: rotateY(180deg);
+        }
+        #status {
+            position: fixed;
+            top: 10px;
+            left: 10px;
+            background: rgba(0,0,0,0.7);
+            color: white;
+            padding: 10px;
+            border-radius: 5px;
+            z-index: 1000;
+        }
+        /* 新增星星的樣式 */
+        .star {
+            position: absolute;
+            font-size: 24px;
+            pointer-events: none;
+            z-index: 100;
+            transition: transform 0.2s;
+        }
+        .star:hover {
+            transform: scale(1.2);
+        }
+    </style>
+</head>
+<body>
+    <div id="status">系統狀態: 初始化中...</div>
+    <div id="container">
+        <video id="webcam" autoplay></video>
+        <canvas id="output_canvas"></canvas>
+    </div>
+
+<script type="module">
+import vision from "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.3";
+const { FaceLandmarker, FilesetResolver, DrawingUtils } = vision;
+
+const statusDiv = document.getElementById('status');
+const video = document.getElementById('webcam');
+const canvasElement = document.getElementById('output_canvas');
+const canvasCtx = canvasElement.getContext('2d');
+
+let faceLandmarker;
+let webcamRunning = false;
+let lastVideoTime = -1;
+let results = undefined;
+
+// 新增星星相關變數
+let stars = [];
+let lastStarTime = 0;
+const STAR_INTERVAL = 50; // 每50ms產生一顆星星
+const GRAVITY = 0.4; // 重力加速度
+const INITIAL_VELOCITY = 10; // 初始速度
+
+// 星星類別
+class Star {
+    constructor(x, y) {
+        this.element = document.createElement('div');
+        this.element.className = 'star';
+        this.element.textContent = '⭐';
+        this.element.style.left = x + 'px';
+        this.element.style.top = y + 'px';
+        this.element.style.transform = 'scale(0.5)';
+        document.body.appendChild(this.element);
+
+        this.x = x;
+        this.y = y;
+        this.vx = (Math.random() - 0.5) * INITIAL_VELOCITY * 2;
+        this.vy = -INITIAL_VELOCITY * (1 + Math.random());
+        this.opacity = 1;
+        this.age = 0;
+    }
+
+    update() {
+        this.age++;
+        this.x += this.vx;
+        this.vy += GRAVITY;
+        this.y += this.vy;
+        this.opacity = Math.max(0, 1 - this.age / 40);
+
+        this.element.style.left = this.x + 'px';
+        this.element.style.top = this.y + 'px';
+        this.element.style.opacity = this.opacity;
+
+        return this.opacity > 0;
+    }
+
+    remove() {
+        this.element.remove();
+    }
+}
+
+// 設定狀態顯示
+function setStatus(message) {
+    statusDiv.textContent = `系統狀態: ${message}`;
+}
+
+// 初始化 FaceLandmarker
+async function initializeFaceLandmarker() {
+    try {
+        setStatus("載入模型中...");
+        const filesetResolver = await FilesetResolver.forVisionTasks(
+            "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.3/wasm"
+        );
+        
+        faceLandmarker = await FaceLandmarker.createFromOptions(filesetResolver, {
+            baseOptions: {
+                modelAssetPath: `https://storage.googleapis.com/mediapipe-models/face_landmarker/face_landmarker/float16/1/face_landmarker.task`,
+                delegate: "GPU"
+            },
+            outputFaceBlendshapes: true,
+            runningMode: "VIDEO",
+            numFaces: 1
+        });
+        
+        setStatus("模型載入完成，啟動攝影機...");
+        startCamera();
+    } catch (error) {
+        setStatus(`錯誤: ${error.message}`);
+        console.error(error);
+    }
+}
+
+// 啟動攝影機
+async function startCamera() {
+    try {
+        const constraints = {
+            video: {
+                width: 1280,
+                height: 720
+            }
+        };
+        
+        const stream = await navigator.mediaDevices.getUserMedia(constraints);
+        video.srcObject = stream;
+        video.addEventListener('loadeddata', predictWebcam);
+        webcamRunning = true;
+        setStatus("系統運作中");
+    } catch (error) {
+        setStatus(`攝影機錯誤: ${error.message}`);
+        console.error(error);
+    }
+}
+
+// 預測與繪製
+async function predictWebcam() {
+    canvasElement.width = video.videoWidth;
+    canvasElement.height = video.videoHeight;
+    
+    try {
+        if (lastVideoTime !== video.currentTime) {
+            lastVideoTime = video.currentTime;
+            results = faceLandmarker.detectForVideo(video, performance.now());
+        }
+
+        canvasCtx.clearRect(0, 0, canvasElement.width, canvasElement.height);
+        
+        if (results.faceLandmarks) {
+            const drawingUtils = new DrawingUtils(canvasCtx);
+            
+            for (const landmarks of results.faceLandmarks) {
+                // 繪製眼睛
+                const leftEye = landmarks[159];
+                const rightEye = landmarks[386];
+                
+                // 繪製煎蛋眼睛
+                drawEmoji("🍳", leftEye, 150);
+                drawEmoji("🍳", rightEye, 150);
+
+                // 修正：使用更準確的嘴巴上下點
+                const upperLip = landmarks[0];  // 上唇中點
+                const lowerLip = landmarks[17]; // 下唇中點
+                
+                // 計算嘴巴開合的距離
+                const mouthDistance = Math.abs(upperLip.y - lowerLip.y);
+                // 調整閾值為更小的值
+                const mouthOpen = mouthDistance > 0.03;
+
+                // 除錯用：在控制台顯示距離
+                console.log("Mouth distance:", mouthDistance);
+
+                if (mouthOpen) {
+                    const now = performance.now();
+                    if (now - lastStarTime > STAR_INTERVAL) {
+                        // 計算嘴巴中心點
+                        const mouthX = ((upperLip.x + lowerLip.x) / 2) * canvasElement.width;
+                        const mouthY = ((upperLip.y + lowerLip.y) / 2) * canvasElement.height;
+                        
+                        // 創建新星星
+                        stars.push(new Star(mouthX, mouthY));
+                        lastStarTime = now;
+                        
+                        // 除錯用：顯示星星創建
+                        console.log("Star created at:", mouthX, mouthY);
+                    }
+                }
+            }
+        }
+
+        // 更新星星
+        stars = stars.filter(star => {
+            const alive = star.update();
+            if (!alive) {
+                star.remove();
+            }
+            return alive;
+        });
+
+    } catch (error) {
+        setStatus(`偵測錯誤: ${error.message}`);
+        console.error(error);
+    }
+
+    if (webcamRunning) {
+        window.requestAnimationFrame(predictWebcam);
+    }
+}
+
+// 繪製 emoji 的輔助函數
+function drawEmoji(emoji, position, size) {
+    const x = position.x * canvasElement.width;
+    const y = position.y * canvasElement.height;
+    
+    canvasCtx.font = `${size}px Arial`;
+    canvasCtx.textAlign = 'center';
+    canvasCtx.textBaseline = 'middle';
+    canvasCtx.fillText(emoji, x, y);
+}
+
+// 啟動程式
+initializeFaceLandmarker();
+</script>
+
+</body>
+</html>
